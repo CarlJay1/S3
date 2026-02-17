@@ -1,0 +1,94 @@
+# Description of what this change includes
+# Revision number
+# Date
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  ECPI AI Lab - CloudFormation template to create a VPC named VPC-carang0168
+  spanning at least 3 Availability Zones in us-west-2.
+
+# CloudFormation templates are region-agnostic, but this Rule enforces deployment to us-west-2.
+Rules:
+  EnforceUsWest2:
+    Assertions:
+      - Assert:
+          Fn::Equals:
+            - !Ref "AWS::Region"
+            - us-west-2
+        AssertDescription: This stack must be deployed in the us-west-2 region.
+
+Resources:
+  # Create exactly one VPC and tag it Name=VPC-carang0168
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: VPC-carang0168
+
+  # Create 3 subnets mapped to 3 different AZs using dynamic AZ selection (no hardcoded AZ names)
+  SubnetAZ1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs ""
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: Subnet-carang0168-az1
+
+  SubnetAZ2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.2.0/24
+      AvailabilityZone: !Select
+        - 1
+        - !GetAZs ""
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: Subnet-carang0168-az2
+
+  SubnetAZ3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.3.0/24
+      AvailabilityZone: !Select
+        - 2
+        - !GetAZs ""
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: Subnet-carang0168-az3
+
+Outputs:
+  VpcId:
+    Description: VPC ID for VPC-carang0168
+    Value: !Ref VPC
+
+  SubnetIds:
+    Description: Comma-delimited list of Subnet IDs across 3 AZs
+    Value: !Join
+      - ","
+      - - !Ref SubnetAZ1
+        - !Ref SubnetAZ2
+        - !Ref SubnetAZ3
+
+  SubnetAz1Id:
+    Description: Subnet ID in AZ index 0
+    Value: !Ref SubnetAZ1
+
+  SubnetAz2Id:
+    Description: Subnet ID in AZ index 1
+    Value: !Ref SubnetAZ2
+
+  SubnetAz3Id:
+    Description: Subnet ID in AZ index 2
+    Value: !Ref SubnetAZ3
